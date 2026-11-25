@@ -3,11 +3,23 @@ package com.example.earbudautoplay
 import android.app.SearchManager
 import android.content.Context
 import android.content.Intent
+import android.media.AudioManager
 import android.net.Uri
 import android.provider.MediaStore
+import kotlin.math.roundToInt
 
 object Player {
     fun prefs(c: Context) = c.getSharedPreferences("prefs", Context.MODE_PRIVATE)
+
+    /** Sets media volume to the saved percentage, if the feature is enabled. */
+    fun applyVolume(c: Context) {
+        val p = prefs(c)
+        if (!p.getBoolean("volEnabled", false)) return
+        val am = c.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        val max = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+        val target = (p.getInt("volPercent", 50) / 100f * max).roundToInt()
+        am.setStreamVolume(AudioManager.STREAM_MUSIC, target, 0)
+    }
 
     /**
      * Song field can be either:

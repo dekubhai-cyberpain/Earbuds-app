@@ -26,8 +26,17 @@ class EarbudReceiver : BroadcastReceiver() {
 
         // Give the audio route a moment to switch to the earbuds
         val pending = goAsync()
-        Handler(Looper.getMainLooper()).postDelayed({
-            try { Player.play(context) } finally { pending.finish() }
+        val handler = Handler(Looper.getMainLooper())
+        handler.postDelayed({
+            try {
+                Player.applyVolume(context)
+                Player.play(context)
+            } catch (e: Exception) {
+            }
+            // Bluetooth volume can re-sync after connecting, so apply it once more
+            handler.postDelayed({
+                try { Player.applyVolume(context) } finally { pending.finish() }
+            }, 2000)
         }, 2500)
     }
 }

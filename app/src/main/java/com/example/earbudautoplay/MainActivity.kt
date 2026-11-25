@@ -47,9 +47,30 @@ class MainActivity : Activity() {
             setText(prefs.getString("pkg", "com.spotify.music"))
         }
         val songInput = EditText(this).apply {
-            hint = "Song name + artist, or a link like spotify:track:..."
+            hint = "Song link (or song name + artist)"
             setText(prefs.getString("song", ""))
         }
+
+        val volSwitch = Switch(this).apply {
+            text = "Set volume when earbuds connect"
+            isChecked = prefs.getBoolean("volEnabled", false)
+            setPadding(0, pad, 0, 0)
+            setOnCheckedChangeListener { _, on -> prefs.edit().putBoolean("volEnabled", on).apply() }
+        }
+        val volLabel = TextView(this)
+        val volBar = SeekBar(this).apply {
+            max = 100
+            progress = prefs.getInt("volPercent", 50)
+            setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+                override fun onProgressChanged(sb: SeekBar?, p: Int, fromUser: Boolean) {
+                    volLabel.text = "Volume: $p%"
+                    if (fromUser) prefs.edit().putInt("volPercent", p).apply()
+                }
+                override fun onStartTrackingTouch(sb: SeekBar?) {}
+                override fun onStopTrackingTouch(sb: SeekBar?) {}
+            })
+        }
+        volLabel.text = "Volume: ${volBar.progress}%"
 
         val saveBtn = Button(this).apply {
             text = "Save"
@@ -63,7 +84,7 @@ class MainActivity : Activity() {
         }
         val testBtn = Button(this).apply {
             text = "Test play now"
-            setOnClickListener { saveBtn.performClick(); Player.play(context) }
+            setOnClickListener { saveBtn.performClick(); Player.applyVolume(context); Player.play(context) }
         }
         val overlayBtn = Button(this).apply {
             text = "Allow display over other apps (required)"
@@ -74,7 +95,7 @@ class MainActivity : Activity() {
             }
         }
 
-        listOf(enabled, deviceLabel, chooseBtn, pkgInput, songInput, saveBtn, testBtn, overlayBtn)
+        listOf(enabled, deviceLabel, chooseBtn, pkgInput, songInput, volSwitch, volLabel, volBar, saveBtn, testBtn, overlayBtn)
             .forEach { root.addView(it) }
         setContentView(ScrollView(this).apply { addView(root) })
     }
