@@ -10,6 +10,8 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.provider.Settings
 import android.widget.*
 
@@ -84,7 +86,9 @@ class MainActivity : Activity() {
         }
         val testBtn = Button(this).apply {
             text = "Test play now"
-            setOnClickListener { saveBtn.performClick(); Player.applyVolume(context); Player.play(context) }
+            setOnClickListener { saveBtn.performClick(); Player.applyVolume(context); Player.play(context)
+                Handler(Looper.getMainLooper()).postDelayed({ Player.nudgePlay(context) }, 3500)
+            }
         }
         val overlayBtn = Button(this).apply {
             text = "Allow display over other apps (required)"

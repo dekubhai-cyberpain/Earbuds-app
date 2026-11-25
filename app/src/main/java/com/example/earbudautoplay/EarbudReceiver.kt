@@ -35,7 +35,11 @@ class EarbudReceiver : BroadcastReceiver() {
             }
             // Bluetooth volume can re-sync after connecting, so apply it once more
             handler.postDelayed({
-                try { Player.applyVolume(context) } finally { pending.finish() }
+                try { Player.applyVolume(context) } catch (e: Exception) {}
+                // Finally, nudge the music app's player to start if it only loaded the song
+                handler.postDelayed({
+                    try { Player.nudgePlay(context) } finally { pending.finish() }
+                }, 2500)
             }, 2000)
         }, 2500)
     }

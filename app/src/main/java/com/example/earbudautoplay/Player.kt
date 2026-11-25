@@ -5,11 +5,29 @@ import android.content.Context
 import android.content.Intent
 import android.media.AudioManager
 import android.net.Uri
+import android.view.KeyEvent
 import android.provider.MediaStore
 import kotlin.math.roundToInt
 
 object Player {
     fun prefs(c: Context) = c.getSharedPreferences("prefs", Context.MODE_PRIVATE)
+
+    private const val SIMPMUSIC = "com.maxrave.simpmusic"
+    private val videoId = Regex("(?:[?&]v=|youtu\\.be/|/embed/|/v/)([A-Za-z0-9_-]{11})")
+
+    /** For SimpMusic, turn any YouTube / YouTube Music link into its own simpmusic:// link. */
+    private fun toDeepLink(pkg: String, link: String): String {
+        if (pkg != SIMPMUSIC) return link
+        val id = videoId.find(link)?.groupValues?.get(1) ?: return link
+        return "simpmusic://watch?v=$id"
+    }
+
+    /** Sends a media "play" key press (does nothing if already playing). */
+    fun nudgePlay(c: Context) {
+        val am = c.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        am.dispatchMediaKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_PLAY))
+        am.dispatchMediaKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_MEDIA_PLAY))
+    }
 
     /** Sets media volume to the saved percentage, if the feature is enabled. */
     fun applyVolume(c: Context) {
@@ -35,7 +53,7 @@ object Player {
 
         val isLink = song.startsWith("spotify:") || song.contains("://")
         val intent = if (isLink) {
-            Intent(Intent.ACTION_VIEW, Uri.parse(song)).setPackage(pkg)
+            Intent(Intent.ACTION_VIEW, Uri.parse(toDeepLink(pkg, song))).setPackage(pkg)
         } else {
             Intent(MediaStore.INTENT_ACTION_MEDIA_PLAY_FROM_SEARCH).apply {
                 setPackage(pkg)
