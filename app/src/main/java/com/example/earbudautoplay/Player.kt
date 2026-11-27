@@ -15,11 +15,22 @@ object Player {
     private const val SIMPMUSIC = "com.maxrave.simpmusic"
     private val videoId = Regex("(?:[?&]v=|youtu\\.be/|/embed/|/v/)([A-Za-z0-9_-]{11})")
 
-    /** For SimpMusic, turn any YouTube / YouTube Music link into its own simpmusic:// link. */
+    private val listId = Regex("[?&]list=([A-Za-z0-9_-]+)")
+
+    /**
+     * For SimpMusic, turn a YouTube / YouTube Music link into its own simpmusic:// link.
+     * Handles single songs, playlists, and songs opened from within a playlist.
+     */
     private fun toDeepLink(pkg: String, link: String): String {
         if (pkg != SIMPMUSIC) return link
-        val id = videoId.find(link)?.groupValues?.get(1) ?: return link
-        return "simpmusic://watch?v=$id"
+        val vid = videoId.find(link)?.groupValues?.get(1)
+        val list = listId.find(link)?.groupValues?.get(1)
+        return when {
+            vid != null && list != null -> "simpmusic://watch?v=$vid&list=$list"
+            vid != null -> "simpmusic://watch?v=$vid"
+            list != null -> "simpmusic://playlist?list=$list"
+            else -> link
+        }
     }
 
     /** Sends a media "play" key press (does nothing if already playing). */
